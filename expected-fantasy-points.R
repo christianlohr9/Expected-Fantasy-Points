@@ -10,12 +10,10 @@ source("https://raw.githubusercontent.com/nflverse/nflfastR/d0a0009237938d8fe5a1
 source("https://raw.githubusercontent.com/nflverse/nflfastR/fd8a24580dfda70253eea1e85b4b22101d5a743f/R/helper_add_nflscrapr_mutations.R")
 source("https://raw.githubusercontent.com/nflverse/nflfastR/a02724d9ef2a802b41b799a37d88702081cead08/R/helper_additional_functions.R")
 source("https://raw.githubusercontent.com/nflverse/nflfastR/57638c4c6ae1286b226e255570d0024c0df9d2ce/R/utils.R")
-source()
+source("https://raw.githubusercontent.com/christianlohr9/Expected-Fantasy-Points/main/R/xyac-ryoe-helper-functions.R")
 
-
-
-Sys.setenv(http_proxy = "172.30.15.242:8080")
-Sys.setenv(https_proxy = "172.30.7.242:8080")
+# Sys.setenv(http_proxy = "172.30.15.242:8080")
+# Sys.setenv(https_proxy = "172.30.7.242:8080")
 
 act_season <- 2021
 week <- 1:17
@@ -39,17 +37,20 @@ pbp_all <- pbp_db %>%
   add_xyac %>% 
   add_ryoe
   
+###########
+# Everything below is a fucking mess!
+###########
 
-rec_actual_xFP <- avg_exp_fp_df %>% 
-  # filter(week.x==10) %>%
-  select(season = season.x, week = week.x, game_id, play_id, posteam = posteam.x, receiver_id, yardline_100 = yardline_100.x, air_yards = air_yards.x, 
-         actual_yards_gained = yards_gained, complete_pass, cp, yac_prob = prob, gain) %>% 
+
+xFP <- avg_exp_fp_df %>% 
+  select(season, week, game_id, play_id, posteam, receiver_id, rusher_id, yardline_100, air_yards, 
+         actual_yards_gained = yards_gained, complete_pass, cp, xyac_prob, xyac_gain, x_rush_yards) %>% 
   mutate(
-    gain = ifelse(yardline_100==air_yards, yardline_100, gain),
+    gain = ifelse(yardline_100==air_yards, yardline_100, xyac_gain),
     #oben bei gain einfach first down einf?gen du Held
-    yac_prob = ifelse(yardline_100==air_yards, 1, yac_prob),
+    yac_prob = ifelse(yardline_100==air_yards, 1, xyac_prob),
     PPR_points = 0.5 + gain/10 + ifelse(gain == yardline_100, 6, 0),
-    catch_run_prob = cp * yac_prob,
+    catch_run_prob = cp * xyac_prob,
     exp_PPR_points = PPR_points * catch_run_prob,
     exp_yards = gain * catch_run_prob,
     actual_outcome = ifelse(actual_yards_gained==gain & complete_pass==1, 1, 0),

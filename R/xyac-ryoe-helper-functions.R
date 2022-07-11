@@ -101,8 +101,8 @@ add_xyac <- function(pbp, ...) {
         ) %>%
         dplyr::summarise(
           xyac_fd = sum((.data$gain >= .data$original_ydstogo) * .data$prob),
-          prob = mean(.data$prob),
-          gain = mean(.data$gain)
+          xyac_prob = mean(.data$prob),
+          xyac_gain = mean(.data$gain)
         ) %>%
         dplyr::ungroup()
       
