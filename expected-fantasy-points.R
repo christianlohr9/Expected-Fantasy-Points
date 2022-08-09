@@ -42,8 +42,8 @@ pbp_all <- pbp_db %>%
 ###########
 
 
-xFP <- avg_exp_fp_df %>% 
-  select(season, week, game_id, play_id, posteam, receiver_id, rusher_id, yardline_100, air_yards, 
+xFP <- pbp_all %>% 
+  select(season, week, game_id, play_id, posteam, receiver_id, rusher_id, fantasy_player_id, yardline_100, air_yards, 
          actual_yards_gained = yards_gained, complete_pass, cp, xyac_prob, xyac_gain, x_rush_yards) %>% 
   mutate(
     gain = ifelse(yardline_100==air_yards, yardline_100, xyac_gain),

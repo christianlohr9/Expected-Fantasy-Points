@@ -97,14 +97,33 @@ add_xyac <- function(pbp, ...) {
             .data$defeam_timeouts_pre
           ),
           # ydstogo can't be bigger than yardline
-          ydstogo = dplyr::if_else(.data$ydstogo >= .data$yardline_100, as.integer(.data$yardline_100), as.integer(.data$ydstogo))
+          ydstogo = dplyr::if_else(.data$ydstogo >= .data$yardline_100, as.integer(.data$yardline_100), as.integer(.data$ydstogo)),
+          ###
+          gain = ifelse(yardline_100==air_yards, yardline_100, gain),
+          yac_prob = ifelse(yardline_100==air_yards, 1, prob),
+          PPR_points = 1 + gain/10 + ifelse(gain == yardline_100, 6, 0),
+          catch_run_prob = cp * yac_prob,
+          exp_PPR_points = PPR_points * catch_run_prob,
+          exp_yards = gain * catch_run_prob,
+          actual_outcome = ifelse(actual_yards_gained==gain & complete_pass==1, 1, 0),
+          actual_PPR_points = ifelse(actual_outcome==1, PPR_points, 0),
+          target = 0,
+          game_played = 0
         ) %>%
-        dplyr::summarise(
-          xyac_fd = sum((.data$gain >= .data$original_ydstogo) * .data$prob),
-          xyac_prob = mean(.data$prob),
-          xyac_gain = mean(.data$gain)
-        ) %>%
-        dplyr::ungroup()
+        group_by(game_id, receiver) %>% 
+        mutate(game_played = ifelse(row_number()==1,1,0)) %>% 
+        ungroup %>% 
+        group_by(game_id, play_id, receiver) %>% 
+        mutate(target = ifelse(row_number()==1,1,0)) %>% 
+        ungroup %>% 
+        group_by(.data$index) %>% 
+        summarize(
+          exp_catches = sum(ifelse(target==1, cp, NA), na.rm = T),
+          exp_yards = sum(exp_yards, na.rm = T),
+          exp_td = sum(ifelse(gain==yardline_100, catch_run_prob, 0), na.rm = T),
+          exp_PPR_pts = sum(exp_PPR_points, na.rm = T)
+        ) %>% 
+        dplyr::ungroup() %>% filter(.data$index==1)
       
       pbp <- pbp %>%
         dplyr::left_join(xyac_vars, by = "index") %>%
